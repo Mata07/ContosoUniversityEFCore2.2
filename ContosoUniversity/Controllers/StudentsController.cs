@@ -72,15 +72,37 @@ namespace ContosoUniversity.Controllers
         // POST: Students/Create
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // The Bind attribute that the scaffolded code includes on the Create method is one way to protect against overposting in create scenarios.
+
+            //VIEW MODELS
+        //An alternative way to prevent overposting that's preferred by many developers
+        //is to use view models rather than entity classes with model binding.
+        //Include only the properties you want to update in the view model. 
+        //Once the MVC model binder has finished, copy the view model properties to the entity instance,
+        //optionally using a tool such as AutoMapper.
+        //Use _context.Entry on the entity instance to set its state to Unchanged,
+        //and then set Property("PropertyName").IsModified to true on each entity property that's included in the view model.
+        //This method works in both edit and create scenarios.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,LastName,FirstMidName,EnrollmentDate")] Student student)
-        {
-            if (ModelState.IsValid)
+        [ValidateAntiForgeryToken]        
+        public async Task<IActionResult> Create([Bind("EnrollmentDate,FirstMidName,LastName")] Student student)
+        {       
+            //Bind bez ID jer se dodaje automatski, a ne od usera i dodan try catch blok
+            try
             {
-                _context.Add(student);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ModelState.IsValid)
+                {
+                    _context.Add(student); //This code adds the Student entity created by the ASP.NET Core MVC model binder
+                    await _context.SaveChangesAsync(); // save changes
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            catch (DbUpdateException /* ex */)
+            {
+                //Log the error (uncomment ex variable name and write a log.)
+                ModelState.AddModelError("", "Unable to save changes. " +
+                    "Try again, and if the problem persists " +
+                    "see your system administrator.");
             }
             return View(student);
         }
