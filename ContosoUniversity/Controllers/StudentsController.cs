@@ -204,7 +204,7 @@ namespace ContosoUniversity.Controllers
                 s => s.FirstMidName, s => s.LastName, s => s.EnrollmentDate))
             {
                 try
-                {                    
+                {
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateException /*ex*/)
@@ -254,7 +254,10 @@ namespace ContosoUniversity.Controllers
         //}
 
         // GET: Students/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        //This code accepts an optional parameter that indicates whether the method was called after a failure to save changes.
+        //This parameter is false when the HttpGet Delete method is called without a previous failure. 
+        //When it's called by the HttpPost Delete method in response to a database update error, the parameter is true and an error message is passed to the view.
+        public async Task<IActionResult> Delete(int? id, bool? saveChangesError = false)
         {
             if (id == null)
             {
@@ -262,12 +265,19 @@ namespace ContosoUniversity.Controllers
             }
 
             var student = await _context.Students
+                .AsNoTracking() //dodano
                 .FirstOrDefaultAsync(m => m.ID == id);
             if (student == null)
             {
                 return NotFound();
             }
 
+            if (saveChangesError.GetValueOrDefault()) // dodana error poruka
+            {
+                ViewData["ErrorMessage"] =
+                    "Delete failed. Try again, and if the problem persists " +
+                    "see your system administrator.";
+            }
             return View(student);
         }
 
@@ -277,9 +287,23 @@ namespace ContosoUniversity.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var student = await _context.Students.FindAsync(id);
-            _context.Students.Remove(student);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            if (student == null)// provjera
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            try // dodan try catch
+            {
+                _context.Students.Remove(student);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException /* ex */)
+            {
+                //Log the error (uncomment ex variable name and write a log.)
+                return RedirectToAction(nameof(Delete), new { id = id, saveChangesError = true });
+            }
         }
 
         private bool StudentExists(int id)
