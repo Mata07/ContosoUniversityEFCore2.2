@@ -23,12 +23,13 @@ namespace ContosoUniversity.Controllers
         // GET: Students
 
         //1. Prima sortOrder parametar iz query stringa u URL-u
-        public async Task<IActionResult> Index(string sortOrder)
+        public async Task<IActionResult> Index(string sortOrder, string searchString)
         {
             // Za column heading hyperlinks (određuju raspored prikaza po imenu i datumu)
             // Postavi ViewData["NameSortParm"] na "name_desc" ako je sortOrder null ili prazan string, ako nije postavi na prazan string
             ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
             ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["CurrentFilter"] = searchString;  //dodajemo za search
 
             //The method uses LINQ to Entities to specify the column to sort by.
             //1. The code creates an IQueryable variable before the switch statement, 
@@ -39,6 +40,11 @@ namespace ContosoUniversity.Controllers
             //Therefore, this code results in a single query that's not executed until the return View statement.
             var students = from s in _context.Students
                            select s;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                students = students.Where(s => s.LastName.Contains(searchString)
+                                        || s.FirstMidName.Contains(searchString));
+            }
 
             switch (sortOrder)
             {
