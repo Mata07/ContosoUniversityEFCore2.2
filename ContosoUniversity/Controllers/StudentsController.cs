@@ -19,25 +19,103 @@ namespace ContosoUniversity.Controllers
             _context = context;
         }
 
-        //The async keyword tells the compiler to generate callbacks for parts of the method body
-        //and to automatically create the Task<IActionResult> object that's returned.
-        //The return type Task<IActionResult> represents ongoing work with a result of type IActionResult.
-
-        //Only statements that cause queries or commands to be sent to the database are executed asynchronously.
-        //That includes, for example, ToListAsync, SingleOrDefaultAsync, and SaveChangesAsync. 
-        //It doesn't include, for example, statements that just change an IQueryable,
-        //such as var students = context.Students.Where(s => s.LastName == "Davolio").
-
+        // Dodajemo sorting, filtering i paging
         // GET: Students
-        public async Task<IActionResult> Index()
-        {
-            //The await keyword causes the compiler to split the method into two parts.
-            //The first part ends with the operation that's started asynchronously.
-            //The second part is put into a callback method that's called when the operation completes.
 
-            //ToListAsync is the asynchronous version of the ToList extension method.
-            return View(await _context.Students.ToListAsync());
+        //1. Prima sortOrder parametar iz query stringa u URL-u
+        public async Task<IActionResult> Index(string sortOrder)
+        {
+            // Za column heading hyperlinks (određuju raspored prikaza po imenu i datumu)
+            // Postavi ViewData["NameSortParm"] na "name_desc" ako je sortOrder null ili prazan string, ako nije postavi na prazan string
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+
+            //The method uses LINQ to Entities to specify the column to sort by.
+            //1. The code creates an IQueryable variable before the switch statement, 
+            //2. modifies it in the switch statement, 
+            //3. and calls the ToListAsync method after the switch statement.
+            //When you create and modify IQueryable variables, no query is sent to the database. 
+            //The query isn't executed until you convert the IQueryable object into a collection by calling a method such as ToListAsync.
+            //Therefore, this code results in a single query that's not executed until the return View statement.
+            var students = from s in _context.Students
+                           select s;
+
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    students = students.OrderByDescending(s => s.LastName);
+                    break;
+                case "Date":
+                    students = students.OrderBy(s => s.EnrollmentDate);
+                    break;
+                case "date_desc":
+                    students = students.OrderByDescending(s => s.EnrollmentDate);
+                    break;
+                default:
+                    students = students.OrderBy(s => s.LastName);
+                    break;
+            }
+
+            return View(await students.AsNoTracking().ToListAsync());
         }
+
+        //1. Prima sortOrder parametar iz query stringa u URL-u - FULL raspisano
+        //public async Task<IActionResult> Index(string sortOrder)
+        //{
+        //    // Za column heading hyperlinks (određuju raspored prikaza po imenu i datumu)
+        //    // Postavi ViewData["NameSortParam"] na "name_desc" ako je sortOrder null ili prazan string, ako nije postavi na prazan string
+
+        //    //if (String.IsNullOrEmpty(sortOrder)) //ako je sortOrder null ili prazan string
+        //    //{
+        //    //    //Postavi ViewData["NameSortParam"] na "name_desc" i napravi sortiranje po prezimenu descending
+        //    //    ViewData["NameSortParam"] = "name_desc";
+        //    //}
+        //    //else
+        //    //{
+        //    //    //ako nije postavi na prazan string i ostavi sortiranje po prezimenu na default ascending
+        //    //    ViewData["NameSortParam"] = "";
+        //    //}
+
+        //    //if (sortOrder == "Date") //ako je querystring sortOrder Date
+        //    //{
+        //    //    // postavi na date_desc i sortiraj po datumu
+        //    //    ViewData["DateSortParam"] = "date_desc";
+        //    //}
+        //    //else
+        //    //{
+        //    //    // u suprotnom postavi columnu Date na Date vrijednost za sortiranje u switch-u
+        //    //    ViewData["DateSortParam"] = "Date";
+        //    //}
+
+        //    //The method uses LINQ to Entities to specify the column to sort by.
+        //    //1. The code creates an IQueryable variable before the switch statement, 
+        //    //2. modifies it in the switch statement, 
+        //    //3. and calls the ToListAsync method after the switch statement.
+        //    //When you create and modify IQueryable variables, no query is sent to the database. 
+        //    //The query isn't executed until you convert the IQueryable object into a collection by calling a method such as ToListAsync.
+        //    //Therefore, this code results in a single query that's not executed until the return View statement.
+        //    var students = from s in _context.Students
+        //                   select s;
+
+        //    switch (sortOrder)
+        //    {
+        //        case "name_desc":
+        //            students = students.OrderByDescending(s => s.LastName);
+        //            break;
+        //        case "Date":
+        //            students = students.OrderBy(s => s.EnrollmentDate);
+        //            break;
+        //        case "date_desc":
+        //            students = students.OrderByDescending(s => s.EnrollmentDate);
+        //            break;
+        //        default:
+        //            students = students.OrderBy(s => s.LastName);
+        //            break;
+        //    }
+
+        //    return View(await students.AsNoTracking().ToListAsync());
+        //}
+
 
         // GET: Students/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -113,7 +191,7 @@ namespace ContosoUniversity.Controllers
             return View(student);
         }
 
-        // 2. TryUpdateModelAsync Method
+        //// 2. TryUpdateModelAsync Method
         //[HttpPost]
         //[ValidateAntiForgeryToken]
         //public async Task<IActionResult> Create(Student student)
@@ -176,6 +254,7 @@ namespace ContosoUniversity.Controllers
                 return NotFound();
             }
 
+            //Koristimo FindAsync jer ne moramo Include neki drugi entity pa je nešto efikasniji
             var student = await _context.Students.FindAsync(id);
             if (student == null)
             {
@@ -187,7 +266,6 @@ namespace ContosoUniversity.Controllers
         // POST: Students/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-
         [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditPost(int? id)
@@ -306,9 +384,9 @@ namespace ContosoUniversity.Controllers
             }
         }
 
-        private bool StudentExists(int id)
-        {
-            return _context.Students.Any(e => e.ID == id);
-        }
+        //private bool StudentExists(int id)
+        //{
+        //    return _context.Students.Any(e => e.ID == id);
+        //}
     }
 }
