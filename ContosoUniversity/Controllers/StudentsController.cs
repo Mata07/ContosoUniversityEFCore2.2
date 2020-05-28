@@ -20,26 +20,37 @@ namespace ContosoUniversity.Controllers
         }
 
         // Dodajemo sorting, filtering i paging
-        // GET: Students
-
-        //1. Prima sortOrder parametar iz query stringa u URL-u
-        public async Task<IActionResult> Index(string sortOrder, string searchString)
+        // GET: Students       
+        public async Task<IActionResult> Index(string sortOrder, string searchString, string currentFilter, int? pageNumber)
         {
-            // Za column heading hyperlinks (određuju raspored prikaza po imenu i datumu)
-            // Postavi ViewData["NameSortParm"] na "name_desc" ako je sortOrder null ili prazan string, ako nije postavi na prazan string
+            //The first time the page is displayed, or if the user hasn't clicked a paging or sorting link, all the parameters will be null.
+            //If a paging link is clicked, the page variable will contain the page number to display.
+
+            //The ViewData element named CurrentSort provides the view with the current sort order, 
+            //because this must be included in the paging links in order to keep the sort order the same while paging.
+            ViewData["CurrentSort"] = sortOrder;
+           
             ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
             ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
-            ViewData["CurrentFilter"] = searchString;  //dodajemo za search
 
-            //The method uses LINQ to Entities to specify the column to sort by.
-            //1. The code creates an IQueryable variable before the switch statement, 
-            //2. modifies it in the switch statement, 
-            //3. and calls the ToListAsync method after the switch statement.
-            //When you create and modify IQueryable variables, no query is sent to the database. 
-            //The query isn't executed until you convert the IQueryable object into a collection by calling a method such as ToListAsync.
-            //Therefore, this code results in a single query that's not executed until the return View statement.
+            //If the search string is changed during paging, the page has to be reset to 1, because the new filter can result in different data to display.
+            if (searchString != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+
+            //The ViewData element named CurrentFilter provides the view with the current filter string.
+            //This value must be included in the paging links in order to maintain the filter settings during paging,
+            //and it must be restored to the text box when the page is redisplayed.
+            ViewData["CurrentFilter"] = searchString;  //dodajemo za search
+            
             var students = from s in _context.Students
                            select s;
+
             if (!String.IsNullOrEmpty(searchString))
             {
                 students = students.Where(s => s.LastName.Contains(searchString)
@@ -61,66 +72,14 @@ namespace ContosoUniversity.Controllers
                     students = students.OrderBy(s => s.LastName);
                     break;
             }
+            int pageSize = 3;
 
-            return View(await students.AsNoTracking().ToListAsync());
-        }
-
-        //1. Prima sortOrder parametar iz query stringa u URL-u - FULL raspisano
-        //public async Task<IActionResult> Index(string sortOrder)
-        //{
-        //    // Za column heading hyperlinks (određuju raspored prikaza po imenu i datumu)
-        //    // Postavi ViewData["NameSortParam"] na "name_desc" ako je sortOrder null ili prazan string, ako nije postavi na prazan string
-
-        //    //if (String.IsNullOrEmpty(sortOrder)) //ako je sortOrder null ili prazan string
-        //    //{
-        //    //    //Postavi ViewData["NameSortParam"] na "name_desc" i napravi sortiranje po prezimenu descending
-        //    //    ViewData["NameSortParam"] = "name_desc";
-        //    //}
-        //    //else
-        //    //{
-        //    //    //ako nije postavi na prazan string i ostavi sortiranje po prezimenu na default ascending
-        //    //    ViewData["NameSortParam"] = "";
-        //    //}
-
-        //    //if (sortOrder == "Date") //ako je querystring sortOrder Date
-        //    //{
-        //    //    // postavi na date_desc i sortiraj po datumu
-        //    //    ViewData["DateSortParam"] = "date_desc";
-        //    //}
-        //    //else
-        //    //{
-        //    //    // u suprotnom postavi columnu Date na Date vrijednost za sortiranje u switch-u
-        //    //    ViewData["DateSortParam"] = "Date";
-        //    //}
-
-        //    //The method uses LINQ to Entities to specify the column to sort by.
-        //    //1. The code creates an IQueryable variable before the switch statement, 
-        //    //2. modifies it in the switch statement, 
-        //    //3. and calls the ToListAsync method after the switch statement.
-        //    //When you create and modify IQueryable variables, no query is sent to the database. 
-        //    //The query isn't executed until you convert the IQueryable object into a collection by calling a method such as ToListAsync.
-        //    //Therefore, this code results in a single query that's not executed until the return View statement.
-        //    var students = from s in _context.Students
-        //                   select s;
-
-        //    switch (sortOrder)
-        //    {
-        //        case "name_desc":
-        //            students = students.OrderByDescending(s => s.LastName);
-        //            break;
-        //        case "Date":
-        //            students = students.OrderBy(s => s.EnrollmentDate);
-        //            break;
-        //        case "date_desc":
-        //            students = students.OrderByDescending(s => s.EnrollmentDate);
-        //            break;
-        //        default:
-        //            students = students.OrderBy(s => s.LastName);
-        //            break;
-        //    }
-
-        //    return View(await students.AsNoTracking().ToListAsync());
-        //}
+            //At the end of the Index method, the PaginatedList.CreateAsync method converts the student query 
+            //to a single page of students in a collection type that supports paging.
+            //That single page of students is then passed to the view.
+            //pageNumber ?? 1 - hasValue = pageNumber ili null = 1
+            return View(await PaginatedList<Student>.CreateAsync(students.AsNoTracking(), pageNumber ?? 1, pageSize));
+        }        
 
 
         // GET: Students/Details/5
