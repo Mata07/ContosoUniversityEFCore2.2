@@ -76,17 +76,29 @@
     var nextDisabled = !Model.HasNextPage ? "disabled" : "";
 }
 
+@*The paging buttons(links to previous and next page) are displayed by tag helpers:*@
+<a asp-action="Index"
+   asp-route-sortOrder="@ViewData["SortOrder"]"
+   asp-route-pageNumber="1"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-light @prevDisabled">First</a>
+
 <a asp-action="Index"
    asp-route-sortOrder="@ViewData["CurrentSort"]"
    asp-route-pageNumber="@(Model.PageIndex - 1)"
    asp-route-currentFilter="@ViewData["CurrentFilter"]"
-   class="btn btn-default @prevDisabled">
-    Previous
-</a>
+   class="btn btn-light @prevDisabled">Previous</a>
+
+<span>@Model.PageIndex</span>/<span>@Model.TotalPages</span>
+
 <a asp-action="Index"
    asp-route-sortOrder="@ViewData["CurrentSort"]"
    asp-route-pageNumber="@(Model.PageIndex + 1)"
    asp-route-currentFilter="@ViewData["CurrentFilter"]"
-   class="btn btn-default @nextDisabled">
-    Next
-</a>
+   class="btn btn-light @nextDisabled">Next</a>
+
+<a asp-action="Index"
+   asp-route-sortOrder="@ViewData["SortOrder"]"
+   asp-route-pageNumber="@(Model.TotalPages)"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-light @nextDisabled">Last</a>
