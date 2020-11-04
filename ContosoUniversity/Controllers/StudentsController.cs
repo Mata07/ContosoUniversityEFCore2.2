@@ -19,7 +19,7 @@ namespace ContosoUniversity.Controllers
             _context = context;
         }
 
-        // Dodajemo sorting, filtering i paging
+        
         // GET: Students       
         public async Task<IActionResult> Index(string sortOrder, string searchString, string currentFilter, int? pageNumber)
         {
@@ -156,60 +156,7 @@ namespace ContosoUniversity.Controllers
             return View(student);
         }
 
-        //// 2. TryUpdateModelAsync Method
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create(Student student)
-        //{
-        //    if (await TryUpdateModelAsync<Student>(
-        //        student,    // Uses the posted form values
-        //        "student", // Prefix for form value.
-        //        s => s.FirstMidName, s => s.LastName, s => s.EnrollmentDate)) //Updates only the properties listed
-        //    {
-        //        try //nisam siguran da li treba? dodano iz Edit metode
-        //        {
-        //            _context.Add(student); //This code adds the Student entity created by the ASP.NET Core MVC model binder
-        //            await _context.SaveChangesAsync(); // save changes
-        //            return RedirectToAction(nameof(Index));
-        //        }
-        //        catch (DbUpdateException /* ex */)
-        //        {
-        //            //Log the error (uncomment ex variable name and write a log.)
-        //            ModelState.AddModelError("", "Unable to save changes. " +
-        //                "Try again, and if the problem persists " +
-        //                "see your system administrator.");
-        //        }
-        //    }
-        //    return View(student);
-        //}
-
-        //3. View Model metoda - Mijenjamo i @model u View-u
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create(StudentViewModel studentViewModel) //proslijeđujemo ViewModel
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        try
-        //        {
-        //            var entry = _context.Add(new Student());
-        //            //The SetValues method sets the values of this object by reading values from another PropertyValues object. 
-        //            //SetValues uses property name matching. The view model type doesn't need to be related to the model type,
-        //            //it just needs to have properties that match.
-        //            entry.CurrentValues.SetValues(studentViewModel);
-        //            await _context.SaveChangesAsync(); // save changes
-        //            return RedirectToAction(nameof(Index));
-        //        }
-        //        catch (DbUpdateException /*ex*/)
-        //        {
-        //            //Log the error (uncomment ex variable name and write a log.)
-        //            ModelState.AddModelError("", "Unable to save changes. " +
-        //                "Try again, and if the problem persists " +
-        //                "see your system administrator.");
-        //        }
-        //    }
-        //    return View(studentViewModel);
-        //}
+        
 
         // GET: Students/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -263,39 +210,6 @@ namespace ContosoUniversity.Controllers
         }
 
 
-        // 2. BIND - You can use this approach when the web page UI includes all of the fields in the entity and can update any of them.
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Edit(int id, [Bind("ID,LastName,FirstMidName,EnrollmentDate")] Student student)
-        //{
-        //    if (id != student.ID)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    if (ModelState.IsValid)
-        //    {
-        //        try
-        //        {
-        //            _context.Update(student);
-        //            await _context.SaveChangesAsync();
-        //        }
-        //        catch (DbUpdateConcurrencyException)
-        //        {
-        //            if (!StudentExists(student.ID))
-        //            {
-        //                return NotFound();
-        //            }
-        //            else
-        //            {
-        //                throw;
-        //            }
-        //        }
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    return View(student);
-        //}
-
         // GET: Students/Delete/5
         //This code accepts an optional parameter that indicates whether the method was called after a failure to save changes.
         //This parameter is false when the HttpGet Delete method is called without a previous failure. 
@@ -348,10 +262,6 @@ namespace ContosoUniversity.Controllers
                 return RedirectToAction(nameof(Delete), new { id = id, saveChangesError = true });
             }
         }
-
-        //private bool StudentExists(int id)
-        //{
-        //    return _context.Students.Any(e => e.ID == id);
-        //}
+        
     }
 }
