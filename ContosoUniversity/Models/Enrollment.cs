@@ -1,4 +1,5 @@
-﻿using System.Security.Permissions;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Permissions;
 using System.Threading;
 
 namespace ContosoUniversity.Models
@@ -15,6 +16,7 @@ namespace ContosoUniversity.Models
 
         //A grade that's null is different from a zero grade 
         //null means a grade isn't known or hasn't been assigned yet.
+        [DisplayFormat(NullDisplayText = "No grade")]
         public Grade? Grade { get; set; }
 
         //Navigation properties 
