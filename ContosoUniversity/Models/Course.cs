@@ -24,6 +24,8 @@ namespace ContosoUniversity.Models
         public Department Department { get; set; }
         //A Course entity can be related to any number of Enrollment entities.
         public ICollection<Enrollment> Enrollments { get; set; }
+
+        // CourseAssignment - join table Instructor-to-Course
         public ICollection<CourseAssignment> CourseAssignments { get; set; }
     }
 }
