@@ -31,12 +31,12 @@ namespace ContosoUniversity.Controllers
             var viewModel = new InstructorIndexData();
 
             viewModel.Instructors = await _context.Instructors
-                .Include(i => i.OfficeAssignment)
-                .Include(i => i.CourseAssignments)
-                    .ThenInclude(i => i.Course)
+                .Include(i => i.OfficeAssignment)           // load navigation properties
+                .Include(i => i.CourseAssignments)          // load navigation properties
+                    .ThenInclude(i => i.Course)             // load navigation properties to get related Courses, Erollments and Students
                         .ThenInclude(i => i.Enrollments)
                             .ThenInclude(i => i.Student)
-                .Include(i => i.CourseAssignments)
+                .Include(i => i.CourseAssignments)          // load navigation properties to get related Departments to Courses
                     .ThenInclude(i => i.Course)
                         .ThenInclude(i => i.Department)
                 .AsNoTracking()
@@ -50,8 +50,7 @@ namespace ContosoUniversity.Controllers
 
                 // The selected instructor is retrieved from the list of instructors in the view model.
                 // The Where method returns a collection, but in this case the criteria passed to that method result in only a single Instructor entity being returned.
-                // The Single method converts the collection into a single Instructor entity, which gives you access to that entity's CourseAssignments property.
-                
+                // The Single method converts the collection into a single Instructor entity, which gives you access to that entity's CourseAssignments property.                
                 Instructor instructor = viewModel.Instructors.Where(i => i.ID == id.Value).Single();
 
                 // The view model's Courses property is then loaded with the Course entities from that instructor's CourseAssignments navigation property.

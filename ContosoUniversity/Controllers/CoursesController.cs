@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ContosoUniversity.Data;
 using ContosoUniversity.Models;
+using ContosoUniversity.Models.SchoolViewModels;
 
 namespace ContosoUniversity.Controllers
 {
@@ -19,6 +20,7 @@ namespace ContosoUniversity.Controllers
             _context = context;
         }
 
+        // 1.
         // GET: Courses
         public async Task<IActionResult> Index()
         {
@@ -26,6 +28,23 @@ namespace ContosoUniversity.Controllers
                             .Include(c => c.Department)
                             .AsNoTracking();
             return View(await courses.ToListAsync());
+        }
+
+        // 2. Expl - Load related data with linq Select and ViewModel (RazorPages Example)
+        // 2.1 Create CourseViewModel in Models.SchoolViewModels
+        // 2.2 Change Index method to this method
+        public async Task<IActionResult> IndexVM()
+        {
+            // List<CourseViewModel> CourseVM = new List<CourseViewModel>();
+            var courseVM = await _context.Courses
+                            .Select(p => new CourseViewModel
+                            {
+                                CourseID = p.CourseID,
+                                Title = p.Title,
+                                Credits = p.Credits,
+                                DepartmentName = p.Department.Name
+                            }).ToListAsync();
+            return View(courseVM);
         }
 
         // GET: Courses/Details/5

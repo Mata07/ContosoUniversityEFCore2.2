@@ -26,7 +26,7 @@
             string selectedRow = "";
             if (item.ID == (int?)ViewData["InstructorID"])
             {
-                selectedRow = "success";
+                selectedRow = "success"; // adds a css class to selected Instructor <tr>
             }
             <tr class="@selectedRow">
                 <td>
@@ -79,11 +79,12 @@
             string selectedRow = "";
             if (item.CourseID == (int?)ViewData["CourseID"])
             {
-                selectedRow = "success";
+                selectedRow = "success"; 
             }
             <tr class="@selectedRow">
                 <td>
-                    @Html.ActionLink("Select", "Index", new { courseID = item.CourseID })
+                    @*@Html.ActionLink("Select", "Index", new { courseID = item.CourseID }) -  old syntax*@ 
+                    <a asp-action="Index" asp-route-courseId="@item.CourseID">Select</a> |
                 </td>
                 <td>
                     @item.CourseID
