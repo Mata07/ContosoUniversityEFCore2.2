@@ -55,7 +55,7 @@ namespace ContosoUniversity.Controllers
 
                 // The view model's Courses property is then loaded with the Course entities from that instructor's CourseAssignments navigation property.
                 // The CourseAssignments property contains CourseAssignment entities, from which you want only the related Course entities.
-                viewModel.Courses = instructor.CourseAssignments.Select(s => s.Course);                
+                viewModel.Courses = instructor.CourseAssignments.Select(s => s.Course);
             }
 
             // if a course was selected, the selected course is retrieved from the list of courses in the view model
@@ -64,9 +64,9 @@ namespace ContosoUniversity.Controllers
                 ViewData["CourseID"] = courseID.Value;
 
                 // Then the view model's Enrollments property is loaded with the Enrollment entities from that course's Enrollments navigation property.
-                viewModel.Enrollments = viewModel.Courses.Where(x => x.CourseID == courseID).Single().Enrollments;                   
+                viewModel.Enrollments = viewModel.Courses.Where(x => x.CourseID == courseID).Single().Enrollments;
             }
-      
+
             return View(viewModel);
         }
 
@@ -118,7 +118,11 @@ namespace ContosoUniversity.Controllers
                 return NotFound();
             }
 
-            var instructor = await _context.Instructors.FindAsync(id);
+            var instructor = await _context.Instructors
+                             .Include(i => i.OfficeAssignment) // load OfficeAssignment
+                             .AsNoTracking()
+                             .FirstOrDefaultAsync(m => m.ID == id);
+
             if (instructor == null)
             {
                 return NotFound();
@@ -127,38 +131,48 @@ namespace ContosoUniversity.Controllers
         }
 
         // POST: Instructors/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,LastName,FirstMidName,HireDate")] Instructor instructor)
+        public async Task<IActionResult> EditPost(int? id)
         {
-            if (id != instructor.ID)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            // Gets the current Instructor entity from the database
+            // using eager loading for the OfficeAssignment navigation property
+            var instructorToUpdate = await _context.Instructors
+                .Include(i => i.OfficeAssignment)
+                .FirstOrDefaultAsync(s => s.ID == id);
+
+            // Updates the retrieved Instructor entity with values from the model binder.
+            if (await TryUpdateModelAsync<Instructor>(
+                instructorToUpdate,
+                "",
+                i => i.FirstMidName, i => i.LastName, i => i.HireDate, i => i.OfficeAssignment))
             {
+                // If the office location is blank, sets the Instructor.OfficeAssignment property to null
+                // so that the related row in the OfficeAssignment table will be deleted.
+                if (String.IsNullOrWhiteSpace(instructorToUpdate.OfficeAssignment?.Location))
+                {
+                    instructorToUpdate.OfficeAssignment = null;
+                }
                 try
                 {
-                    _context.Update(instructor);
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateException /*ex*/)
                 {
-                    if (!InstructorExists(instructor.ID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    // Log the error
+                    ModelState.AddModelError("", "Unable to save changes. " +
+                        "Try again, and if the problem persists, " +
+                        "see your system administrator.");
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(instructor);
+
+            return View(instructorToUpdate);
         }
 
         // GET: Instructors/Delete/5
