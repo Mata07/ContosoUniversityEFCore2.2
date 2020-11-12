@@ -25,6 +25,13 @@ namespace ContosoUniversity.Models
 
         public int? InstructorID { get; set; }
 
+
+        // tracking property
+        // The Timestamp attribute specifies that this column will be included
+        // in the Where clause of Update and Delete commands sent to the database.
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
+
         public Instructor Administrator { get; set; }
         public ICollection<Course> Courses { get; set; }
     }
