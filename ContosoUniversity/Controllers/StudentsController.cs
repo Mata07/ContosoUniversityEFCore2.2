@@ -57,21 +57,49 @@ namespace ContosoUniversity.Controllers
                                         || s.FirstMidName.Contains(searchString));
             }
 
-            switch (sortOrder)
+            //switch (sortOrder)
+            //{
+            //    case "name_desc":
+            //        students = students.OrderByDescending(s => s.LastName);
+            //        break;
+            //    case "Date":
+            //        students = students.OrderBy(s => s.EnrollmentDate);
+            //        break;
+            //    case "date_desc":
+            //        students = students.OrderByDescending(s => s.EnrollmentDate);
+            //        break;
+            //    default:
+            //        students = students.OrderBy(s => s.LastName);
+            //        break;
+            //}
+            // 08-Advanced - Use dynamic LINQ, replace switch for sort order
+            // The third tutorial in this series shows how to write LINQ code by 
+            // hard - coding column names in a switch statement.With two columns to choose from,
+            // this works fine, but if you have many columns the code could get verbose.
+            // To solve that problem, you can use the EF.Property method
+            // to specify the name of the property as a string.
+            if (string.IsNullOrEmpty(sortOrder))
             {
-                case "name_desc":
-                    students = students.OrderByDescending(s => s.LastName);
-                    break;
-                case "Date":
-                    students = students.OrderBy(s => s.EnrollmentDate);
-                    break;
-                case "date_desc":
-                    students = students.OrderByDescending(s => s.EnrollmentDate);
-                    break;
-                default:
-                    students = students.OrderBy(s => s.LastName);
-                    break;
+                sortOrder = "LastName";
             }
+
+            bool descending = false;
+            if (sortOrder.EndsWith("_desc")) // date_desc
+            {
+                sortOrder = sortOrder.Substring(0, sortOrder.Length - 5); // date
+                descending = true;
+            }
+
+            if (descending)
+            {
+                students = students.OrderByDescending(e => EF.Property<object>(e, sortOrder));
+            }
+            else
+            {
+                students = students.OrderBy(e => EF.Property<object>(e, sortOrder));
+            }
+
+
             int pageSize = 3;
 
             //At the end of the Index method, the PaginatedList.CreateAsync method converts the student query 
