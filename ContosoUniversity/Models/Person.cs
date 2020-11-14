@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ContosoUniversity.Models
 {
-    public class Person
+    public abstract class Person
     {
         public int ID { get; set; }
 
